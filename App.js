@@ -6,7 +6,7 @@ import { Platform, StatusBar, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Provider } from "react-redux";
-import { Store } from "./store/bills";
+import { Store } from "./store";
 
 import AppNavigator from "./navigation/AppNavigator";
 

@@ -40,7 +40,7 @@ import {
   getLocalStorageData,
   setLocalStorageData,
   LocalTypeKeys
-} from "./LocalStorageHandler";
+} from "../../utils/LocalStorageHandler";
 import { toast } from "../../utils/functions";
 
 const { MONEY, BILLS } = LocalTypeKeys;
@@ -64,7 +64,7 @@ class Home extends Component {
 
   saveData = () => {
     // saving bills
-    setLocalStorageData(BILLS, this.props.bills)
+    setLocalStorageData(BILLS + "/" + pageId, this.props.bills)
       .then(res => {
         toast("Contas salvas!");
       })
@@ -72,7 +72,7 @@ class Home extends Component {
         toast("Erro ao salvar as contas.");
       });
     // saving money
-    setLocalStorageData(MONEY, this.state.money)
+    setLocalStorageData(MONEY + "/" + pageId, this.state.money)
       .then(res => {
         toast("Dinheiro salvo!");
       })
@@ -82,9 +82,9 @@ class Home extends Component {
   };
 
   componentDidMount() {
-    const { actionUpdateAllBills } = this.props;
+    const { actionUpdateAllBills, pageId } = this.props;
 
-    getLocalStorageData(BILLS)
+    getLocalStorageData(BILLS + "/" + pageId)
       .then(Bills => {
         if (Bills) {
           actionUpdateAllBills(Bills);
@@ -99,7 +99,7 @@ class Home extends Component {
 
     // === getting money value ===
 
-    getLocalStorageData(MONEY)
+    getLocalStorageData(MONEY + "/" + pageId)
       .then(Money => {
         if (Money) {
           this.setState(state => ({

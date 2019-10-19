@@ -16,9 +16,12 @@
 
 import { AsyncStorage } from "react-native";
 
+export const KEY_BASE = "@payYourBills";
+
 export const LocalTypeKeys = {
-  MONEY: "@payYourBills/money",
-  BILLS: "@payYourBills/bills"
+  MONEY: KEY_BASE + "/money",
+  BILLS: KEY_BASE + "/bills",
+  PAGES: KEY_BASE + "/pages"
 };
 
 export const setLocalStorageData = (storage_key, value) => {

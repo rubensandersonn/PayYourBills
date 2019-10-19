@@ -6,7 +6,8 @@ import {
 } from "react-navigation";
 
 import TabBarIcon from "../components/TabBarIcon";
-import HomeScreen from "../screens/Home/Home";
+import Pages from "../screens/Pages";
+import BillsScreen from "../screens/Home/Home";
 import LinksScreen from "../screens/LinksScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 
@@ -17,7 +18,8 @@ const config = Platform.select({
 
 const HomeStack = createStackNavigator(
   {
-    Home: HomeScreen
+    Home: Pages,
+    Bills: BillsScreen
   },
   config
 );
@@ -29,8 +31,8 @@ HomeStack.navigationOptions = {
       focused={focused}
       name={
         Platform.OS === "ios"
-          ? `ios-information-circle${focused ? "" : "-outline"}`
-          : "md-information-circle"
+          ? `ios-home${focused ? "" : "-outline"}`
+          : "md-home"
       }
     />
   )
