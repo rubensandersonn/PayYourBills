@@ -10,6 +10,7 @@ import Pages from "../screens/Pages";
 import BillsScreen from "../screens/Home/Home";
 import LinksScreen from "../screens/LinksScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import { primaryEnd, secondary } from "../utils/colors";
 
 const config = Platform.select({
   web: { headerMode: "screen" },
@@ -26,14 +27,11 @@ const HomeStack = createStackNavigator(
 
 HomeStack.navigationOptions = {
   tabBarLabel: "Home",
+  tabLabelColor: secondary,
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
-      name={
-        Platform.OS === "ios"
-          ? `ios-home${focused ? "" : "-outline"}`
-          : "md-home"
-      }
+      name={Platform.OS === "ios" ? `ios-home` : "md-home"}
     />
   )
 };
@@ -53,6 +51,7 @@ LinksStack.navigationOptions = {
     <TabBarIcon
       focused={focused}
       name={Platform.OS === "ios" ? "ios-link" : "md-link"}
+      color={primaryEnd}
     />
   )
 };
@@ -72,6 +71,7 @@ SettingsStack.navigationOptions = {
     <TabBarIcon
       focused={focused}
       name={Platform.OS === "ios" ? "ios-options" : "md-options"}
+      color={primaryEnd}
     />
   )
 };

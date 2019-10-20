@@ -2,9 +2,7 @@ import { createStore } from "redux";
 import { combineReducers } from "redux";
 
 const INITIAL_PAGES_STATE = [
-  { title: "cartão", id: 0 },
-  { title: "cu", id: 1 },
-  { title: "top", id: 2 }
+  //{ title: "cu top", id: 0 }
 ];
 
 // ESTE CARALHO DEVE SER UNICO, SENAO ELE NAO FAZ

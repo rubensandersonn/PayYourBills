@@ -16,7 +16,7 @@ export const Subtitle = styled.Text`
 
 export const Card = styled.TouchableOpacity`
   background-color: white;
-
-  height: 25%;
   margin: 10px;
+  align-items: center;
+  justify-content: center;
 `;

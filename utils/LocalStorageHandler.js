@@ -25,6 +25,7 @@ export const LocalTypeKeys = {
 };
 
 export const setLocalStorageData = (storage_key, value) => {
+  console.log("ls SET | ls key and value:", storage_key, value);
   return new Promise(async (resolve, reject) => {
     try {
       await AsyncStorage.setItem(storage_key, JSON.stringify(value));
@@ -39,6 +40,7 @@ export const setLocalStorageData = (storage_key, value) => {
 
 export const getLocalStorageData = storage_key => {
   return new Promise(async (resolve, reject) => {
+    console.log("lsGet | ls key:", storage_key);
     try {
       const value = await AsyncStorage.getItem(storage_key);
       if (value !== null) {

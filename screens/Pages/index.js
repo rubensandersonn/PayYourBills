@@ -1,6 +1,6 @@
 import React, { Component, useCallback } from "react";
 
-import { View } from "react-native";
+import { View, Image } from "react-native";
 
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
@@ -40,18 +40,13 @@ class Pages extends Component {
 
   state = { visiblePopupAdd: false, pageHolder: {} };
 
-  componentDidMount() {
+  componentWillMount() {
     const ls_key_pages = LocalTypeKeys.PAGES;
-    console.log("key:", ls_key_pages);
     getLocalStorageData(ls_key_pages)
       .then(Pages => {
-        actionUpdateAllPages(Pages);
-        console.log("Pages:", Pages);
-        console.log("pages", this.props.pages);
+        this.props.actionUpdateAllPages(Pages);
       })
-      .catch(error => {
-        console.log("paginas nulas", error);
-      });
+      .catch(error => {});
   }
 
   /**
@@ -154,13 +149,14 @@ class Pages extends Component {
 
       setLocalStorageData(ls_key_pages, pages)
         .then(res => {
-          console.log("pagina adicionada no ls", pages);
           actionAddPage({
             title: pageHolder.title,
             id: pages && pages.length !== 0 ? pages[pages.length - 1].id + 1 : 0
           });
+        })
+        .then(res => {
           this.clearPageHolder();
-          // this.changePage();
+          this.changePage();
         })
         .catch(err => {
           toast("erro ao salvar a nova conta", err);
@@ -242,11 +238,44 @@ class Pages extends Component {
   }
 }
 
-const mapDispatchToProps = dispatch => ({
-  actionUpdateAllPages: pages => dispatch(actionUpdateAllPages(pages)),
-  actionAddPage: page => dispatch(actionAddPage(page)),
-  actionDeletePage: id => dispatch(actionDeletePage(id))
-});
+Pages.navigationOptions = {
+  headerTitle: <Titulo />
+};
+
+function Titulo() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: 50,
+        marginBottom: 10
+      }}
+    >
+      <View style={{ flexDirection: "row" }}>
+        <Image
+          source={require("../../assets/images/pig.png")}
+          style={{ marginTop: 10, marginHorizontal: 10, resizeMode: "contain" }}
+        />
+        <TitlePage>PAY YOUR BILLS</TitlePage>
+      </View>
+    </View>
+  );
+}
+
+// const mapDispatchToProps = dispatch =>
+//   bindActionCreators(
+//     { actionUpdateAllPages, actionAddPage, actionDeletePage },
+//     dispatch
+//   );
+
+const mapDispatchToProps = {
+  actionUpdateAllPages,
+  actionAddPage,
+  actionDeletePage,
+  actionUpdatePage
+};
 
 const mapStateToProps = state => ({
   pages: state.pagesState
