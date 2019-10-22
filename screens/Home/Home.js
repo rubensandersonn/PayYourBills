@@ -3,7 +3,6 @@ import {
   Title,
   TitlePage,
   WrapperList,
-  AddButton,
   EditMoneyButton,
   TextAddButton,
   TextInputName,
@@ -11,7 +10,8 @@ import {
   SaveButton,
   TitlePopup,
   RText,
-  Total
+  Total,
+  PinkTitle
 } from "./styles";
 
 import Icon from "react-native-vector-icons/FontAwesome";
@@ -30,12 +30,12 @@ import {
 } from "../../store/bills";
 
 import BillsHandler from "../../components/BillsHandler";
-import AddForm from "../../components/AddForm";
+import AddButton from "../../components/AddButton";
 
 import Popup from "../../components/Popup";
 import Conta from "../../components/BillsHandler/Conta";
-import { TextWhite, RoundButton } from "../../utils/styled";
-import { darkGray, primaryEnd, danger, white, gray } from "../../utils/colors";
+import { RoundButton } from "../../utils/styled";
+import { danger, white, gray } from "../../utils/colors";
 import {
   getLocalStorageData,
   setLocalStorageData,
@@ -52,6 +52,8 @@ class Home extends Component {
 
   state = {
     money: 0,
+    pageId: 0,
+    pageTitle: "",
     showFormBill: false,
     visiblePopup: false,
     visiblePopupMoney: false,
@@ -63,8 +65,10 @@ class Home extends Component {
   };
 
   saveData = () => {
+    const { bills } = this.props;
+    const { pageId } = this.state;
     // saving bills
-    setLocalStorageData(BILLS + "/" + pageId, this.props.bills)
+    setLocalStorageData(BILLS + "/" + pageId, bills)
       .then(res => {
         toast("Contas salvas!");
       })
@@ -82,7 +86,8 @@ class Home extends Component {
   };
 
   componentDidMount() {
-    const { actionUpdateAllBills, pageId } = this.props;
+    const { actionUpdateAllBills } = this.props;
+    const { pageId, pageTitle } = this.props.navigation.state.params;
 
     getLocalStorageData(BILLS + "/" + pageId)
       .then(Bills => {
@@ -114,6 +119,8 @@ class Home extends Component {
         console.log(err);
         setMoney(0);
       });
+
+    this.setState({ pageId, pageTitle });
   }
 
   sumAll = bills => {
@@ -196,7 +203,13 @@ class Home extends Component {
     );
 
   render() {
-    const { money, billHolder, visiblePopup, visiblePopupMoney } = this.state;
+    const {
+      pageTitle,
+      money,
+      billHolder,
+      visiblePopup,
+      visiblePopupMoney
+    } = this.state;
     const {
       bills,
       actionUpdateBill,
@@ -207,6 +220,7 @@ class Home extends Component {
 
     return (
       <Wrapper behavior="padding">
+        <PinkTitle>{pageTitle}</PinkTitle>
         <View style={{ flexDirection: "row" }}>
           <Title>Dinheiro do Mês: {money}</Title>
 
@@ -275,9 +289,7 @@ class Home extends Component {
           onPress={() => {
             this.setState(state => ({ ...state, visiblePopup: true }));
           }}
-        >
-          <TextAddButton>+</TextAddButton>
-        </AddButton>
+        />
 
         <Popup
           visible={visiblePopup}
@@ -345,7 +357,7 @@ function Titulo() {
         marginBottom: 10
       }}
     >
-      <View style={{ flexDirection: "row" }}>
+      <View style={{ marginLeft: -48, flexDirection: "row" }}>
         <Image
           source={require("../../assets/images/pig.png")}
           style={{ marginTop: 10, marginHorizontal: 10, resizeMode: "contain" }}

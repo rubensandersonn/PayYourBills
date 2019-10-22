@@ -56,7 +56,6 @@ export const billReducer = (state = INITIAL_BILLS_STATE, action) => {
         }
       ];
     case billsActionTypes.UPDATE_ALL:
-      console.log("cuZAOOOOOOOO");
       return action.payload.bills;
     default:
       return state;

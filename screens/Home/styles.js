@@ -6,7 +6,8 @@ import {
   lightGreen,
   danger,
   green,
-  darkGray
+  darkGray,
+  secondary
 } from "../../utils/colors";
 
 // === TEXT ===
@@ -19,6 +20,16 @@ export const TitlePage = styled.Text`
   margin-bottom: 15px;
   margin-top: 15px;
 `;
+
+export const PinkTitle = styled.Text`
+  font-size: 20px;
+  color: ${secondary};
+  font-weight: bold;
+  margin-bottom: 4px;
+  margin-top: 7px;
+  margin-left: 15px;
+`;
+
 export const Title = styled.Text`
   color: ${gray};
   font-size: 17px;
@@ -44,7 +55,7 @@ export const Total = styled.Text`
   font-weight: bold;
   font-size: 17px;
   margin-left: 2%;
-  padding: 2%;
+  padding: 1%;
 `;
 
 // === WRAPPERS ===

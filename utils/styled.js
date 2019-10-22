@@ -9,8 +9,8 @@ export const TextWhite = styled.Text`
 `;
 
 export const RoundButton = styled.TouchableOpacity`
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 30px;
   background-color: ${danger};
   text-align: center;
@@ -18,4 +18,6 @@ export const RoundButton = styled.TouchableOpacity`
   padding: 10px;
   justify-content: center;
   align-items: center;
+  font-size: 26px;
+  font-weight: 600;
 `;

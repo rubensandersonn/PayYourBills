@@ -24,7 +24,15 @@ export const actionUpdateAllPages = pages => {
 export const actionUpdatePage = (page, id) => {
   return {
     type: pagesActionTypes.UPDATE,
-    payload: { title: page.title, id: id }
+    payload: {
+      id: id,
+      page: {
+        id: id,
+        title: page.title,
+        totalBill: page.totalBill,
+        saldo: page.saldo
+      }
+    }
   };
 };
 export const actionDeletePage = id => ({

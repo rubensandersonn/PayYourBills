@@ -1,6 +1,6 @@
 import React, { Component, useCallback } from "react";
 
-import { View, Image } from "react-native";
+import { View, Image, ActivityIndicator } from "react-native";
 
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
@@ -31,29 +31,56 @@ import {
 import { RoundButton, TextWhite } from "../../utils/styled";
 
 import Page from "../../components/Page";
-import { white } from "../../utils/colors";
+import { white, secondary } from "../../utils/colors";
+import AddButton from "../../components/AddButton";
+
+/**
+ * pages: [int]
+ */
 
 class Pages extends Component {
   constructor(props) {
     super(props);
   }
 
-  state = { visiblePopupAdd: false, pageHolder: {} };
+  state = { visiblePopupAdd: false, pageHolder: {}, isLoaded: false };
 
   componentWillMount() {
     const ls_key_pages = LocalTypeKeys.PAGES;
     getLocalStorageData(ls_key_pages)
       .then(Pages => {
+        // setting the pages to the store
         this.props.actionUpdateAllPages(Pages);
+
+        // getting the bills and money from each page to calculate the total and left
+        Pages.forEach(page => {
+          const ls_key_bills = LocalTypeKeys.BILLS + "/" + page.id;
+          const ls_key_money = LocalTypeKeys.MONEY + "/" + page.id;
+          getLocalStorageData(ls_key_bills).then(bills => {
+            getLocalStorageData(ls_key_money).then(money => {
+              let newPage = page;
+              newPage.totalBill = this.calcTotalBills(bills);
+              newPage.saldo = money - newPage.totalBill;
+              actionUpdatePage(newPage, page.id);
+              this.setState({ isLoaded: true });
+            });
+          });
+        });
       })
-      .catch(error => {});
+
+      .catch(error => {
+        console.log("! erro ao iniciar:", error);
+      });
   }
 
   /**
    * muda para a página de Bills (unica)
    */
-  changePage = pageId => {
-    this.props.navigation.navigate("Bills", { pageId: pageId });
+  changePage = (pageTitle, pageId) => {
+    this.props.navigation.navigate("Bills", {
+      pageTitle: pageTitle,
+      pageId: pageId
+    });
   };
 
   /**
@@ -69,41 +96,16 @@ class Pages extends Component {
   /**
    * Função que calcula o total das contas de uma conta
    */
-  calcTotalBills = pageId => {
+  calcTotalBills = bills => {
     // get page / bills from local storage
-    const ls_key_money = LocalTypeKeys.BILLS + "/" + pageId;
-    getLocalStorageData(ls_key_money)
-      .then(bills => {
-        let total = 0;
-        if (bills) {
-          bills.forEach(el => {
-            total = total + el.bill;
-          });
-        }
-        return total;
-      })
-      .catch(error => {
-        console.log("contas vazias", error);
-        return 0;
+    let total = 0;
+    if (bills) {
+      bills.forEach(el => {
+        total = total + el.bill;
       });
-  };
-
-  /**
-   * Função que calcula o saldo da página
-   */
-  calcSaldo = pageId => {
-    // get page / money from localStorage
-    const ls_key_money = LocalTypeKeys.MONEY + "/" + pageId;
-
-    getLocalStorageData(ls_key_money)
-      .then(money => {
-        const total = this.calcTotalBills(pageId);
-        return money - total;
-      })
-      .catch(error => {
-        console.log("dinheiro vazio", error);
-        return 0;
-      });
+    }
+    // console.log("há contas para somar", bills, total);
+    return total;
   };
 
   /**
@@ -117,7 +119,7 @@ class Pages extends Component {
     const ls_key_bills = LocalTypeKeys.BILLS + "/" + pageId;
 
     // apagando pagina
-    actionDeletePage(pageId);
+    this.props.actionDeletePage(pageId);
 
     // *** APAGANDO PAGINA no localStorage***
     setLocalStorageData(ls_key_pages, pages).then(res => {
@@ -142,23 +144,38 @@ class Pages extends Component {
   addPage = () => {
     //validate bill
     const { pageHolder } = this.state;
+    const ls_key_pages = LocalTypeKeys.PAGES;
+    const ls_key_money = LocalTypeKeys.MONEY;
+    const ls_key_bills = LocalTypeKeys.BILLS;
 
     if (pageHolder.title && pageHolder.title !== "") {
       const { pages, actionAddPage } = this.props;
-      const ls_key_pages = LocalTypeKeys.PAGES;
+      const pageId =
+        pages && pages.length !== 0 ? pages[pages.length - 1].id + 1 : 0;
 
-      setLocalStorageData(ls_key_pages, pages)
+      const newPage = {
+        title: pageHolder.title,
+        id: pageId
+      };
+
+      var newPages = pages ? pages : [];
+      newPages.push(newPage);
+
+      console.log("PAGINAS:", pages, newPages);
+
+      setLocalStorageData(ls_key_pages, newPages)
         .then(res => {
-          actionAddPage({
-            title: pageHolder.title,
-            id: pages && pages.length !== 0 ? pages[pages.length - 1].id + 1 : 0
-          });
+          setLocalStorageData(ls_key_money + "/" + pageId, 0);
+        })
+        .then(res => {
+          setLocalStorageData(ls_key_bills + "/" + pageId, []);
         })
         .then(res => {
           this.clearPageHolder();
-          this.changePage();
+          this.changePage(newPage.title, pageId);
         })
         .catch(err => {
+          console.log("erro ao salvar a nova conta", err);
           toast("erro ao salvar a nova conta", err);
         });
     } else {
@@ -192,23 +209,25 @@ class Pages extends Component {
   render() {
     const { pages } = this.props;
 
-    return (
-      <View>
-        <TitlePage>Páginas</TitlePage>
-        <RoundButton
-          style={{ position: "absolute", right: 10 }}
-          onPress={() => {
-            this.setState({ visiblePopupAdd: true });
-          }}
-        >
-          <TextWhite>+</TextWhite>
-        </RoundButton>
-
+    return this.state.isLoaded ? (
+      <View
+        style={{
+          flex: 1,
+          padding: 0,
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
         <ScrollList>
           {pages &&
             pages.map((page, index) => {
               return (
-                <Card key={index}>
+                <Card
+                  key={index}
+                  onPress={() => {
+                    this.changePage(page.title, page.id);
+                  }}
+                >
                   <DeleteButton
                     onPress={() => {
                       this.deletePage(page.id);
@@ -218,21 +237,38 @@ class Pages extends Component {
                   </DeleteButton>
                   <Page
                     title={page.title}
-                    totalBills={this.calcTotalBills(page.id)}
-                    saldo={this.calcSaldo(page.id)}
+                    totalBill={page.totalBill}
+                    saldo={page.saldo}
                   />
                 </Card>
               );
             })}
+
+          <Popup
+            visible={this.state.visiblePopupAdd}
+            onCancel={() => {
+              this.setState(state => ({ ...state, visiblePopupAdd: false }));
+            }}
+            onConfirm={this.addPage}
+            Content={this.ContentPopup}
+          />
         </ScrollList>
-        <Popup
-          visible={this.state.visiblePopupAdd}
-          onCancel={() => {
-            this.setState(state => ({ ...state, visiblePopupAdd: false }));
+        <AddButton
+          onPress={() => {
+            this.setState({ visiblePopupAdd: true });
           }}
-          onConfirm={this.addPage}
-          Content={this.ContentPopup}
         />
+      </View>
+    ) : (
+      <View
+        style={{
+          height: "100%",
+          flex: 1,
+          alignItems: "center",
+          alignContent: "center"
+        }}
+      >
+        <ActivityIndicator size="small" color={secondary} />
       </View>
     );
   }
@@ -263,12 +299,6 @@ function Titulo() {
     </View>
   );
 }
-
-// const mapDispatchToProps = dispatch =>
-//   bindActionCreators(
-//     { actionUpdateAllPages, actionAddPage, actionDeletePage },
-//     dispatch
-//   );
 
 const mapDispatchToProps = {
   actionUpdateAllPages,
