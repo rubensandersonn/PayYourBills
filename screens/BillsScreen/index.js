@@ -29,7 +29,6 @@ import {
   actionUpdateAllBills
 } from "../../store/bills";
 
-import BillsHandler from "../../components/BillsHandler";
 import AddButton from "../../components/AddButton";
 
 import Popup from "../../components/Popup";
@@ -45,7 +44,7 @@ import { toast } from "../../utils/functions";
 
 const { MONEY, BILLS } = LocalTypeKeys;
 
-class Home extends Component {
+class BillsScreen extends Component {
   constructor(props) {
     super(props);
   }
@@ -342,7 +341,7 @@ class Home extends Component {
   }
 }
 
-Home.navigationOptions = {
+BillsScreen.navigationOptions = {
   headerTitle: <Titulo />
 };
 
@@ -353,8 +352,7 @@ function Titulo() {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        minHeight: 50,
-        marginBottom: 10
+        minHeight: 50
       }}
     >
       <View style={{ marginLeft: -48, flexDirection: "row" }}>
@@ -381,4 +379,4 @@ const mapStateToProps = state => ({
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(Home);
+)(BillsScreen);

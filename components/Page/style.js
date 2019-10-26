@@ -21,5 +21,5 @@ export const Card = styled.View`
   margin: 10px;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  /* flex: 1; */
 `;

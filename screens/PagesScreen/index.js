@@ -14,7 +14,13 @@ import {
   actionUpdateAllPages
 } from "../../store/pages";
 
-import { Card, DeleteButton, ScrollList } from "./style";
+import {
+  Card,
+  DeleteButton,
+  WrapperPage,
+  ScrollList,
+  WrapperRow
+} from "./style";
 import {
   setLocalStorageData,
   LocalTypeKeys,
@@ -27,25 +33,26 @@ import {
   TextInputName,
   WrapperList,
   TitlePage
-} from "../Home/styles";
+} from "../BillsScreen/styles";
 import { RoundButton, TextWhite } from "../../utils/styled";
 
 import Page from "../../components/Page";
 import { white, secondary } from "../../utils/colors";
 import AddButton from "../../components/AddButton";
+import FadeInView from "../../components/FadeInView";
 
 /**
  * pages: [int]
  */
 
-class Pages extends Component {
+class PagesScreen extends Component {
   constructor(props) {
     super(props);
   }
 
   state = { visiblePopupAdd: false, pageHolder: {}, isLoaded: false };
 
-  componentWillMount() {
+  componentDidMount() {
     const ls_key_pages = LocalTypeKeys.PAGES;
     getLocalStorageData(ls_key_pages)
       .then(Pages => {
@@ -190,7 +197,7 @@ class Pages extends Component {
    */
   ContentPopup = () =>
     useCallback(
-      <View behavior="padding">
+      <View>
         <TitlePopup>Nome para a página:</TitlePopup>
         <TextInputName
           onChangeText={text => {
@@ -209,41 +216,65 @@ class Pages extends Component {
   render() {
     const { pages } = this.props;
 
-    return this.state.isLoaded ? (
-      <View
-        style={{
-          flex: 1,
-          padding: 0,
-          alignItems: "center",
-          justifyContent: "center"
-        }}
-      >
-        <ScrollList>
-          {pages &&
-            pages.map((page, index) => {
-              return (
-                <Card
-                  key={index}
-                  onPress={() => {
-                    this.changePage(page.title, page.id);
-                  }}
-                >
-                  <DeleteButton
-                    onPress={() => {
-                      this.deletePage(page.id);
-                    }}
-                  >
-                    <Icon name="trash" size={12} color={white} />
-                  </DeleteButton>
-                  <Page
-                    title={page.title}
-                    totalBill={page.totalBill}
-                    saldo={page.saldo}
-                  />
-                </Card>
-              );
-            })}
-
+    return (
+      <>
+        <WrapperPage>
+          <WrapperRow>
+            <ScrollList index="left">
+              {pages &&
+                pages.map(
+                  (page, index) =>
+                    index % 2 == 0 && (
+                      <Card
+                        key={index}
+                        onPress={() => {
+                          this.changePage(page.title, page.id);
+                        }}
+                      >
+                        <DeleteButton
+                          onPress={() => {
+                            this.deletePage(page.id);
+                          }}
+                        >
+                          <Icon name="trash" size={12} color={white} />
+                        </DeleteButton>
+                        <Page
+                          title={page.title}
+                          totalBill={page.totalBill ? page.totalBill : 0}
+                          saldo={page.saldo ? page.saldo : 0}
+                        />
+                      </Card>
+                    )
+                )}
+            </ScrollList>
+            <ScrollList index="right">
+              {pages &&
+                pages.map(
+                  (page, index) =>
+                    index % 2 != 0 && (
+                      <Card
+                        key={index}
+                        onPress={() => {
+                          this.changePage(page.title, page.id);
+                        }}
+                      >
+                        <DeleteButton
+                          onPress={() => {
+                            this.deletePage(page.id);
+                          }}
+                        >
+                          <Icon name="trash" size={12} color={white} />
+                        </DeleteButton>
+                        <Page
+                          title={page.title}
+                          totalBill={page.totalBill}
+                          saldo={page.saldo}
+                        />
+                      </Card>
+                    )
+                )}
+            </ScrollList>
+          </WrapperRow>
           <Popup
             visible={this.state.visiblePopupAdd}
             onCancel={() => {
@@ -252,29 +283,18 @@ class Pages extends Component {
             onConfirm={this.addPage}
             Content={this.ContentPopup}
           />
-        </ScrollList>
+        </WrapperPage>
         <AddButton
           onPress={() => {
             this.setState({ visiblePopupAdd: true });
           }}
         />
-      </View>
-    ) : (
-      <View
-        style={{
-          height: "100%",
-          flex: 1,
-          alignItems: "center",
-          alignContent: "center"
-        }}
-      >
-        <ActivityIndicator size="small" color={secondary} />
-      </View>
+      </>
     );
   }
 }
 
-Pages.navigationOptions = {
+PagesScreen.navigationOptions = {
   headerTitle: <Titulo />
 };
 
@@ -286,7 +306,7 @@ function Titulo() {
         alignItems: "center",
         justifyContent: "center",
         minHeight: 50,
-        marginBottom: 10
+        padding: 1
       }}
     >
       <View style={{ flexDirection: "row" }}>
@@ -314,4 +334,4 @@ const mapStateToProps = state => ({
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(Pages);
+)(PagesScreen);

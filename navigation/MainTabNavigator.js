@@ -6,8 +6,8 @@ import {
 } from "react-navigation";
 
 import TabBarIcon from "../components/TabBarIcon";
-import Pages from "../screens/Pages";
-import BillsScreen from "../screens/Home/Home";
+import PagesScreen from "../screens/PagesScreen";
+import BillsScreen from "../screens/BillsScreen";
 import LinksScreen from "../screens/LinksScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import { primaryEnd, secondary } from "../utils/colors";
@@ -19,7 +19,7 @@ const config = Platform.select({
 
 const HomeStack = createStackNavigator(
   {
-    Home: Pages,
+    Home: PagesScreen,
     Bills: BillsScreen
   },
   config
@@ -66,11 +66,15 @@ const SettingsStack = createStackNavigator(
 );
 
 SettingsStack.navigationOptions = {
-  tabBarLabel: "Settings",
+  tabBarLabel: "Info",
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
-      name={Platform.OS === "ios" ? "ios-options" : "md-options"}
+      name={
+        Platform.OS === "ios"
+          ? "ios-information-circle"
+          : "md-information-circle"
+      }
       color={primaryEnd}
     />
   )
@@ -80,7 +84,6 @@ SettingsStack.path = "";
 
 const tabNavigator = createBottomTabNavigator({
   HomeStack,
-  LinksStack,
   SettingsStack
 });
 
