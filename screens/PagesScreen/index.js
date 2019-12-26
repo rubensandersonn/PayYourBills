@@ -40,6 +40,8 @@ import Page from "../../components/Page";
 import { white, secondary } from "../../utils/colors";
 import AddButton from "../../components/AddButton";
 import FadeInView from "../../components/FadeInView";
+import { AppLoading } from "expo";
+import { Asset } from "expo-asset";
 
 /**
  * pages: [int]
@@ -50,35 +52,12 @@ class PagesScreen extends Component {
     super(props);
   }
 
-  state = { visiblePopupAdd: false, pageHolder: {}, isLoaded: false };
-
-  componentDidMount() {
-    const ls_key_pages = LocalTypeKeys.PAGES;
-    getLocalStorageData(ls_key_pages)
-      .then(Pages => {
-        // setting the pages to the store
-        this.props.actionUpdateAllPages(Pages);
-
-        // getting the bills and money from each page to calculate the total and left
-        Pages.forEach(page => {
-          const ls_key_bills = LocalTypeKeys.BILLS + "/" + page.id;
-          const ls_key_money = LocalTypeKeys.MONEY + "/" + page.id;
-          getLocalStorageData(ls_key_bills).then(bills => {
-            getLocalStorageData(ls_key_money).then(money => {
-              let newPage = page;
-              newPage.totalBill = this.calcTotalBills(bills);
-              newPage.saldo = money - newPage.totalBill;
-              actionUpdatePage(newPage, page.id);
-              this.setState({ isLoaded: true });
-            });
-          });
-        });
-      })
-
-      .catch(error => {
-        console.log("! erro ao iniciar:", error);
-      });
-  }
+  state = {
+    visiblePopupAdd: false,
+    pageHolder: {},
+    isLoaded: false,
+    isLoadingComplete: false
+  };
 
   /**
    * muda para a página de Bills (unica)
@@ -168,7 +147,7 @@ class PagesScreen extends Component {
       var newPages = pages ? pages : [];
       newPages.push(newPage);
 
-      console.log("PAGINAS:", pages, newPages);
+      //console.log("PAGINAS:", pages, newPages);
 
       setLocalStorageData(ls_key_pages, newPages)
         .then(res => {
@@ -213,84 +192,140 @@ class PagesScreen extends Component {
       [this.state.pageHolder]
     );
 
+  // loading async
+
+  loadResourcesAsync = async () => {
+    const ls_key_pages = LocalTypeKeys.PAGES;
+
+    await Promise.all([
+      Asset.loadAsync([require("../../assets/images/pig.png")]),
+      <Icon name="trash" size={12} color={white} />,
+      getLocalStorageData(ls_key_pages)
+        .then(Pages => {
+          // setting the pages to the store
+          this.props.actionUpdateAllPages(Pages);
+
+          // getting the bills and money from each page to calculate the total and left
+          Pages.forEach(page => {
+            const ls_key_bills = LocalTypeKeys.BILLS + "/" + page.id;
+            const ls_key_money = LocalTypeKeys.MONEY + "/" + page.id;
+            getLocalStorageData(ls_key_bills).then(bills => {
+              getLocalStorageData(ls_key_money).then(money => {
+                let newPage = page;
+                newPage.totalBill = this.calcTotalBills(bills);
+                newPage.saldo = money - newPage.totalBill;
+                actionUpdatePage(newPage, page.id);
+                this.setState({ isLoaded: true });
+              });
+            });
+          });
+        })
+
+        .catch(error => {
+          console.log("! erro ao iniciar:", error);
+        })
+    ]);
+  };
+
+  handleLoadingError = error => {
+    // In this case, you might want to report the error to your error reporting
+    // service, for example Sentry
+    console.warn(error);
+  };
+
+  handleFinishLoading = () => {
+    this.setState({ isLoadingComplete: true });
+  };
+
   render() {
     const { pages } = this.props;
+    const { isLoadingComplete } = this.state;
 
-    return (
-      <>
-        <WrapperPage>
-          <WrapperRow>
-            <ScrollList index="left">
-              {pages &&
-                pages.map(
-                  (page, index) =>
-                    index % 2 == 0 && (
-                      <Card
-                        key={index}
-                        onPress={() => {
-                          this.changePage(page.title, page.id);
-                        }}
-                      >
-                        <DeleteButton
-                          onPress={() => {
-                            this.deletePage(page.id);
-                          }}
-                        >
-                          <Icon name="trash" size={12} color={white} />
-                        </DeleteButton>
-                        <Page
-                          title={page.title}
-                          totalBill={page.totalBill ? page.totalBill : 0}
-                          saldo={page.saldo ? page.saldo : 0}
-                        />
-                      </Card>
-                    )
-                )}
-            </ScrollList>
-            <ScrollList index="right">
-              {pages &&
-                pages.map(
-                  (page, index) =>
-                    index % 2 != 0 && (
-                      <Card
-                        key={index}
-                        onPress={() => {
-                          this.changePage(page.title, page.id);
-                        }}
-                      >
-                        <DeleteButton
-                          onPress={() => {
-                            this.deletePage(page.id);
-                          }}
-                        >
-                          <Icon name="trash" size={12} color={white} />
-                        </DeleteButton>
-                        <Page
-                          title={page.title}
-                          totalBill={page.totalBill}
-                          saldo={page.saldo}
-                        />
-                      </Card>
-                    )
-                )}
-            </ScrollList>
-          </WrapperRow>
-          <Popup
-            visible={this.state.visiblePopupAdd}
-            onCancel={() => {
-              this.setState(state => ({ ...state, visiblePopupAdd: false }));
-            }}
-            onConfirm={this.addPage}
-            Content={this.ContentPopup}
-          />
-        </WrapperPage>
-        <AddButton
-          onPress={() => {
-            this.setState({ visiblePopupAdd: true });
-          }}
+    if (!isLoadingComplete) {
+      return (
+        <AppLoading
+          startAsync={this.loadResourcesAsync}
+          onError={this.handleLoadingError}
+          onFinish={this.handleFinishLoading}
         />
-      </>
-    );
+      );
+    } else {
+      return (
+        <>
+          <WrapperPage>
+            <WrapperRow>
+              <ScrollList index="left">
+                {pages &&
+                  pages.map(
+                    (page, index) =>
+                      index % 2 == 0 && (
+                        <Card
+                          key={index}
+                          onPress={() => {
+                            this.changePage(page.title, page.id);
+                          }}
+                        >
+                          <DeleteButton
+                            onPress={() => {
+                              this.deletePage(page.id);
+                            }}
+                          >
+                            <Icon name="trash" size={12} color={white} />
+                          </DeleteButton>
+                          <Page
+                            title={page.title}
+                            totalBill={page.totalBill ? page.totalBill : 0}
+                            saldo={page.saldo ? page.saldo : 0}
+                          />
+                        </Card>
+                      )
+                  )}
+              </ScrollList>
+              <ScrollList index="right">
+                {pages &&
+                  pages.map(
+                    (page, index) =>
+                      index % 2 != 0 && (
+                        <Card
+                          key={index}
+                          onPress={() => {
+                            this.changePage(page.title, page.id);
+                          }}
+                        >
+                          <DeleteButton
+                            onPress={() => {
+                              this.deletePage(page.id);
+                            }}
+                          >
+                            <Icon name="trash" size={12} color={white} />
+                          </DeleteButton>
+                          <Page
+                            title={page.title}
+                            totalBill={page.totalBill}
+                            saldo={page.saldo}
+                          />
+                        </Card>
+                      )
+                  )}
+              </ScrollList>
+            </WrapperRow>
+            <Popup
+              visible={this.state.visiblePopupAdd}
+              onCancel={() => {
+                this.setState(state => ({ ...state, visiblePopupAdd: false }));
+              }}
+              onConfirm={this.addPage}
+              Content={this.ContentPopup}
+            />
+          </WrapperPage>
+          <AddButton
+            onPress={() => {
+              this.setState({ visiblePopupAdd: true });
+            }}
+          />
+        </>
+      );
+    }
   }
 }
 
@@ -331,7 +366,4 @@ const mapStateToProps = state => ({
   pages: state.pagesState
 });
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(PagesScreen);
+export default connect(mapStateToProps, mapDispatchToProps)(PagesScreen);
