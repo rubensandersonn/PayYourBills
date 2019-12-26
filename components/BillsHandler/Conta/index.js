@@ -1,10 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useCallback } from "react";
 import { CheckBox } from "react-native";
-import Menu, { MenuItem, MenuDivider } from "react-native-material-menu";
+import Menu, { MenuItem } from "react-native-material-menu";
 import { Wrapper, Texto, MenuButton, Line } from "./style";
-import { TextWhite, RoundButton } from "../../../utils/styled";
-import { toast } from "../../../utils/functions";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import Icon from "react-native-vector-icons/FontAwesome";
 
 export default class Conta extends React.Component {
@@ -20,7 +17,14 @@ export default class Conta extends React.Component {
     this.state._menu.show();
   };
 
-  state = { _menu: null, checked: this.props.paid === true };
+  state = {
+    _menu: null,
+    checked: this.props.paid === true
+  };
+
+  /**
+   * Callback that updates the bill
+   */
 
   render() {
     const {
@@ -28,28 +32,27 @@ export default class Conta extends React.Component {
       bill,
       whenChecked,
       deleteCallback,
-      updateCallback,
-      paid,
-      textButton,
-      styleButton
+      updateCallback
     } = this.props;
+
+    const { checked } = this.state;
 
     return (
       <Wrapper>
         <CheckBox
-          value={this.state.checked}
+          value={checked}
           onValueChange={() => {
-            this.setState({ checked: !this.state.checked });
+            this.setState({ checked: !checked });
 
             // telling main when i was checked
             whenChecked();
           }}
         />
         <Line horizontal={true}>
-          <Texto decoration={this.state.checked ? "line-through" : "none"}>
+          <Texto decoration={checked ? "line-through" : "none"}>
             R$ {bill ? bill : 0} -{" "}
           </Texto>
-          <Texto decoration={this.state.checked ? "line-through" : "none"}>
+          <Texto decoration={checked ? "line-through" : "none"}>
             {title ? title : ""}
           </Texto>
         </Line>
@@ -73,7 +76,6 @@ export default class Conta extends React.Component {
           <MenuItem
             onPress={() => {
               updateCallback();
-              this.setState({ checked: !this.state.checked });
               this.hideMenu();
             }}
           >

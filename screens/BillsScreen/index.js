@@ -44,6 +44,8 @@ import {
 import { toast } from "../../utils/functions";
 import { AppLoading } from "expo";
 import { Asset } from "expo-asset";
+import PopupBill from "../../components/BillsHandler/Conta/PopupBill";
+import ConfirmPopup from "../../components/Popup/ConfirmPopup";
 
 const { MONEY, BILLS } = LocalTypeKeys;
 
@@ -58,6 +60,9 @@ class BillsScreen extends Component {
     pageTitle: "",
     showFormBill: false,
     visiblePopup: false,
+    visiblePopupUpdate: false,
+    visiblePopupDelete: false,
+    visiblePopupAdd: false,
     visiblePopupMoney: false,
     isLoadingComplete: false,
     billHolder: {
@@ -70,27 +75,6 @@ class BillsScreen extends Component {
   componentWillUnmount() {
     this.saveData();
   }
-
-  saveData = () => {
-    const { bills } = this.props;
-    const { pageId } = this.state;
-    // saving bills
-    setLocalStorageData(BILLS + "/" + pageId, bills)
-      .then(() => {
-        setLocalStorageData(MONEY + "/" + pageId, this.state.money)
-          .then(() => {
-            toast("Salvo!");
-          })
-          .catch(error => {
-            toast("Erro ao salvar o dinheiro.");
-            console.log(error);
-          });
-      })
-      .catch(errorBils => {
-        toast("Erro ao salvar as contas.");
-      });
-    // saving money
-  };
 
   sumAll = bills => {
     let sum = 0.0;
@@ -118,6 +102,9 @@ class BillsScreen extends Component {
     this.setState(state => ({ ...state, showFormBill: !state.showFormBill }));
   };
 
+  /**
+   * Clears billHolders information
+   */
   clearBillHolder = () => {
     this.setState(state => ({
       ...state,
@@ -125,8 +112,15 @@ class BillsScreen extends Component {
     }));
   };
 
-  Content = () =>
-    useCallback(
+  Content = bill => {
+    // bill is on, then its an update
+    if (bill && bill.title) {
+      this.setState(state => ({
+        ...state,
+        billHolder: { ...state.billHolder, title: bill.title, bill: bill.bill }
+      }));
+    }
+    return useCallback(
       <View behavior="padding">
         <TitlePopup>Nome para a conta:</TitlePopup>
         <TextInputName
@@ -152,6 +146,7 @@ class BillsScreen extends Component {
       </View>,
       [this.state.billHolder]
     );
+  };
 
   ContentEditMoney = () =>
     useCallback(
@@ -222,6 +217,57 @@ class BillsScreen extends Component {
     this.setState({ isLoadingComplete: true });
   };
 
+  // === CRUDS ===
+
+  deleteBill = async el => {
+    await this.props.actionDeleteBill(el.id);
+    toast("Deletado!");
+  };
+
+  updateBill = async el => {
+    await this.props.actionUpdateBill(
+      { ...el, paid: el.paid, bill: el.bill, title: el.title },
+      el.id
+    );
+    await this.setState({ visiblePopupUpdate: false });
+    // toast("Atualizado!");
+  };
+
+  addBill = async el => {
+    await actionAddBill({
+      title: el.title,
+      paid: el.paid,
+      bill: el.bill,
+      id:
+        this.props.bills && this.props.bills.length !== 0
+          ? this.props.bills[this.props.bills.length - 1].id + 1
+          : 0
+    });
+
+    await this.setState({ visiblePopupAdd: false });
+  };
+
+  saveData = () => {
+    const { bills } = this.props;
+    const { pageId } = this.state;
+    // saving bills and money
+    setLocalStorageData(BILLS + "/" + pageId, bills)
+      .then(() => {
+        setLocalStorageData(MONEY + "/" + pageId, this.state.money)
+          .then(() => {
+            toast("Salvo!");
+            this.clearBillHolder();
+          })
+          .catch(error => {
+            toast("Erro ao salvar o dinheiro.");
+            console.log(error);
+          });
+      })
+      .catch(errorBils => {
+        toast("Erro ao salvar as contas.");
+      });
+  };
+
   render() {
     const {
       pageTitle,
@@ -284,22 +330,22 @@ class BillsScreen extends Component {
                     <Conta
                       title={el.title}
                       bill={el.bill}
-                      deleteCallback={async () => {
-                        await actionDeleteBill(el.id);
-                        toast("Deletado!");
+                      deleteCallback={() => {
+                        this.setState({
+                          visiblePopupDelete: true,
+                          billHolder: el
+                        });
                       }}
-                      updateCallback={async () => {
-                        await actionUpdateBill(
-                          { ...el, paid: !el.paid },
-                          el.id
-                        );
-                        toast("Atualizado!");
-                      }}
+                      updateCallback={() =>
+                        this.setState({
+                          visiblePopupUpdate: true,
+                          billHolder: el
+                        })
+                      }
                       whenChecked={() => {
                         actionUpdateBill({ ...el, paid: !el.paid }, el.id);
                       }}
                       paid={el.paid}
-                      textButton={"x"}
                       styleButton={{
                         backgroundColor: danger,
                         width: 40,
@@ -326,7 +372,51 @@ class BillsScreen extends Component {
               Saldo: R$ {parseFloat(money - this.sumAll(bills)).toFixed(2)}
             </Total>
 
+            {/* popup update */}
+            <PopupBill
+              visible={this.state.visiblePopupUpdate}
+              onCancel={() => this.setState({ visiblePopupUpdate: false })}
+              action={this.updateBill}
+              bill={this.state.billHolder}
+            />
+
+            {/* popup add */}
+            <PopupBill
+              visible={this.state.visiblePopupAdd}
+              onCancel={() => this.setState({ visiblePopupAdd: false })}
+              action={this.addBill}
+              bill={this.state.billHolder}
+            />
+
+            {/* popup add */}
             <Popup
+              visible={visiblePopupMoney}
+              onCancel={() => {
+                this.setState(state => ({
+                  ...state,
+                  visiblePopupMoney: false
+                }));
+              }}
+              onConfirm={() => {
+                this.setState(state => ({
+                  ...state,
+                  visiblePopupMoney: false
+                }));
+              }}
+              Content={this.ContentEditMoney}
+            />
+
+            {/* confirm delete */}
+
+            <ConfirmPopup
+              visible={this.state.visiblePopupDelete}
+              onCancel={() => this.setState({ visiblePopupDelete: false })}
+              onConfirm={() => {
+                this.deleteBill(this.state.billHolder);
+              }}
+            />
+
+            {/* <Popup
               visible={visiblePopup}
               onCancel={() => {
                 this.setState(state => ({ ...state, visiblePopup: false }));
@@ -359,29 +449,13 @@ class BillsScreen extends Component {
                 this.setState(state => ({ ...state, visiblePopup: false }));
               }}
               Content={this.Content}
-            />
+            /> */}
 
             {/* pop up edit money */}
-            <Popup
-              visible={visiblePopupMoney}
-              onCancel={() => {
-                this.setState(state => ({
-                  ...state,
-                  visiblePopupMoney: false
-                }));
-              }}
-              onConfirm={() => {
-                this.setState(state => ({
-                  ...state,
-                  visiblePopupMoney: false
-                }));
-              }}
-              Content={this.ContentEditMoney}
-            />
           </WrapperTotals>
           <AddButton
             onPress={() => {
-              this.setState(state => ({ ...state, visiblePopup: true }));
+              this.setState(state => ({ ...state, visiblePopupAdd: true }));
             }}
           />
         </Wrapper>
