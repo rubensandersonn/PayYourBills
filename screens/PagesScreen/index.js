@@ -274,8 +274,12 @@ class PagesScreen extends Component {
                           </DeleteButton>
                           <Page
                             title={page.title}
-                            totalBill={page.totalBill ? page.totalBill : 0}
-                            saldo={page.saldo ? page.saldo : 0}
+                            totalBill={parseFloat(
+                              page.totalBill ? page.totalBill : 0
+                            ).toFixed(2)}
+                            saldo={parseFloat(
+                              page.saldo ? page.saldo : 0
+                            ).toFixed(2)}
                           />
                         </Card>
                       )
@@ -301,8 +305,12 @@ class PagesScreen extends Component {
                           </DeleteButton>
                           <Page
                             title={page.title}
-                            totalBill={page.totalBill}
-                            saldo={page.saldo}
+                            totalBill={parseFloat(
+                              page.totalBill ? page.totalBill : 0
+                            ).toFixed(2)}
+                            saldo={parseFloat(
+                              page.saldo ? page.saldo : 0
+                            ).toFixed(2)}
                           />
                         </Card>
                       )

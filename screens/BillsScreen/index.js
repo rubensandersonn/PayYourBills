@@ -11,7 +11,8 @@ import {
   TitlePopup,
   RText,
   Total,
-  PinkTitle
+  PinkTitle,
+  WrapperTotals
 } from "./styles";
 
 import Icon from "react-native-vector-icons/FontAwesome";
@@ -65,6 +66,10 @@ class BillsScreen extends Component {
       paid: false
     }
   };
+
+  componentWillUnmount() {
+    this.saveData();
+  }
 
   saveData = () => {
     const { bills } = this.props;
@@ -247,7 +252,7 @@ class BillsScreen extends Component {
         <Wrapper behavior="padding">
           <PinkTitle>{pageTitle}</PinkTitle>
           <View style={{ flexDirection: "row" }}>
-            <Title>Recursos: $ {money}</Title>
+            <Title>Recursos: R$ {money}</Title>
 
             <RoundButton
               style={{
@@ -279,8 +284,16 @@ class BillsScreen extends Component {
                     <Conta
                       title={el.title}
                       bill={el.bill}
-                      handleButton={() => {
-                        actionDeleteBill(el.id);
+                      deleteCallback={async () => {
+                        await actionDeleteBill(el.id);
+                        toast("Deletado!");
+                      }}
+                      updateCallback={async () => {
+                        await actionUpdateBill(
+                          { ...el, paid: !el.paid },
+                          el.id
+                        );
+                        toast("Atualizado!");
                       }}
                       whenChecked={() => {
                         actionUpdateBill({ ...el, paid: !el.paid }, el.id);
@@ -301,66 +314,75 @@ class BillsScreen extends Component {
               })}
           </WrapperList>
 
-          <Total>Total: R$ {this.sumAll(bills)}</Total>
-          <Total>
-            Resto: R${" "}
-            {parseFloat(this.sumAll(bills) - this.sumAllPaid(bills)).toFixed(2)}
-          </Total>
-          <Total>
-            Saldo: R$ {parseFloat(money - this.sumAll(bills)).toFixed(2)}
-          </Total>
+          <WrapperTotals>
+            <Total>Total: R$ {this.sumAll(bills)}</Total>
+            <Total>
+              Resto: R${" "}
+              {parseFloat(this.sumAll(bills) - this.sumAllPaid(bills)).toFixed(
+                2
+              )}
+            </Total>
+            <Total>
+              Saldo: R$ {parseFloat(money - this.sumAll(bills)).toFixed(2)}
+            </Total>
 
+            <Popup
+              visible={visiblePopup}
+              onCancel={() => {
+                this.setState(state => ({ ...state, visiblePopup: false }));
+              }}
+              onConfirm={() => {
+                //validate bill
+                const billWithDot = ("" + billHolder.bill).replace(",", ".");
+                if (
+                  billHolder.title &&
+                  billHolder.title !== "" &&
+                  billWithDot &&
+                  billWithDot !== "" &&
+                  billWithDot > 0
+                ) {
+                  actionAddBill({
+                    title: billHolder.title,
+                    paid: billHolder.paid,
+                    bill: billWithDot,
+                    id:
+                      bills && bills.length !== 0
+                        ? bills[bills.length - 1].id + 1
+                        : 0
+                  });
+                  this.clearBillHolder();
+                } else {
+                  toast("AM I JOKE TO YOU?");
+                }
+                //erase bill holder
+
+                this.setState(state => ({ ...state, visiblePopup: false }));
+              }}
+              Content={this.Content}
+            />
+
+            {/* pop up edit money */}
+            <Popup
+              visible={visiblePopupMoney}
+              onCancel={() => {
+                this.setState(state => ({
+                  ...state,
+                  visiblePopupMoney: false
+                }));
+              }}
+              onConfirm={() => {
+                this.setState(state => ({
+                  ...state,
+                  visiblePopupMoney: false
+                }));
+              }}
+              Content={this.ContentEditMoney}
+            />
+          </WrapperTotals>
           <AddButton
             onPress={() => {
               this.setState(state => ({ ...state, visiblePopup: true }));
             }}
-          />
-
-          <Popup
-            visible={visiblePopup}
-            onCancel={() => {
-              this.setState(state => ({ ...state, visiblePopup: false }));
-            }}
-            onConfirm={() => {
-              //validate bill
-              const billWithDot = ("" + billHolder.bill).replace(",", ".");
-              if (
-                billHolder.title &&
-                billHolder.title !== "" &&
-                billWithDot &&
-                billWithDot !== "" &&
-                billWithDot > 0
-              ) {
-                actionAddBill({
-                  title: billHolder.title,
-                  paid: billHolder.paid,
-                  bill: billWithDot,
-                  id:
-                    bills && bills.length !== 0
-                      ? bills[bills.length - 1].id + 1
-                      : 0
-                });
-                this.clearBillHolder();
-              } else {
-                toast("AM I JOKE TO YOU?");
-              }
-              //erase bill holder
-
-              this.setState(state => ({ ...state, visiblePopup: false }));
-            }}
-            Content={this.Content}
-          />
-
-          {/* pop up edit money */}
-          <Popup
-            visible={visiblePopupMoney}
-            onCancel={() => {
-              this.setState(state => ({ ...state, visiblePopupMoney: false }));
-            }}
-            onConfirm={() => {
-              this.setState(state => ({ ...state, visiblePopupMoney: false }));
-            }}
-            Content={this.ContentEditMoney}
           />
         </Wrapper>
       );

@@ -8,8 +8,8 @@ export default function Page(props) {
   return (
     <Card onPress={onPress}>
       <Title>{title}</Title>
-      <Subtitle> - ${totalBill}</Subtitle>
-      <Subtitle>+ ${saldo}</Subtitle>
+      <Subtitle> - R$ {totalBill}</Subtitle>
+      <Subtitle>R$ {saldo}</Subtitle>
     </Card>
   );
 }

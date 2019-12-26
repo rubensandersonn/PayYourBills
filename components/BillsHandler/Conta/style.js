@@ -41,6 +41,17 @@ export const EditButton = styled.TouchableOpacity`
   align-items: center;
 `;
 
+export const MenuButton = styled.TouchableOpacity`
+  width: 32px;
+  height: 32px;
+  margin: 0px;
+  padding: 0px;
+  justify-content: center;
+  align-items: center;
+  background-color: gray;
+  border-radius: 30px;
+`;
+
 export const Line = styled.ScrollView`
   max-width: 70%;
 `;
