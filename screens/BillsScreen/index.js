@@ -3,8 +3,6 @@ import {
   Title,
   TitlePage,
   WrapperList,
-  EditMoneyButton,
-  TextAddButton,
   TextInputName,
   TextInputValue,
   SaveButton,
@@ -44,8 +42,7 @@ import {
 import { toast } from "../../utils/functions";
 import { AppLoading } from "expo";
 import { Asset } from "expo-asset";
-import PopupBill from "../../components/BillsHandler/Conta/PopupBill";
-import ConfirmPopup from "../../components/Popup/ConfirmPopup";
+import { Subtitle } from "../../components/Page/style";
 
 const { MONEY, BILLS } = LocalTypeKeys;
 
@@ -73,7 +70,7 @@ class BillsScreen extends Component {
   };
 
   componentWillUnmount() {
-    this.saveData();
+    // this.saveData();
   }
 
   sumAll = bills => {
@@ -112,15 +109,8 @@ class BillsScreen extends Component {
     }));
   };
 
-  Content = bill => {
-    // bill is on, then its an update
-    if (bill && bill.title) {
-      this.setState(state => ({
-        ...state,
-        billHolder: { ...state.billHolder, title: bill.title, bill: bill.bill }
-      }));
-    }
-    return useCallback(
+  Content = () =>
+    useCallback(
       <View behavior="padding">
         <TitlePopup>Nome para a conta:</TitlePopup>
         <TextInputName
@@ -141,13 +131,15 @@ class BillsScreen extends Component {
               billHolder: { ...state.billHolder, bill: text }
             }));
           }}
-          value={"" + this.state.billHolder.bill}
+          value={
+            this.state.billHolder.bill
+              ? "" + parseFloat(this.state.billHolder.bill)
+              : "0"
+          }
         />
       </View>,
       [this.state.billHolder]
     );
-  };
-
   ContentEditMoney = () =>
     useCallback(
       <View>
@@ -224,27 +216,42 @@ class BillsScreen extends Component {
     toast("Deletado!");
   };
 
-  updateBill = async el => {
+  updateBill = async () => {
+    const { billHolder } = this.state;
     await this.props.actionUpdateBill(
-      { ...el, paid: el.paid, bill: el.bill, title: el.title },
-      el.id
+      { ...billHolder, bill: billHolder.bill, title: billHolder.title },
+      billHolder.id
     );
-    await this.setState({ visiblePopupUpdate: false });
-    // toast("Atualizado!");
+
+    this.setState({ visiblePopupUpdate: false });
+    toast("Atualizado!");
   };
 
-  addBill = async el => {
-    await actionAddBill({
-      title: el.title,
-      paid: el.paid,
-      bill: el.bill,
-      id:
-        this.props.bills && this.props.bills.length !== 0
-          ? this.props.bills[this.props.bills.length - 1].id + 1
-          : 0
-    });
+  addBill = async () => {
+    const { billHolder } = this.state;
+    const { bills, actionAddBill } = this.props;
+    //validate bill
+    const billWithDot = ("" + billHolder.bill).replace(",", ".");
+    if (
+      billHolder.title &&
+      billHolder.title !== "" &&
+      billWithDot &&
+      billWithDot !== "" &&
+      billWithDot > 0
+    ) {
+      await actionAddBill({
+        title: billHolder.title,
+        paid: billHolder.paid,
+        bill: billWithDot,
+        id: bills && bills.length !== 0 ? bills[bills.length - 1].id + 1 : 0
+      });
+      await this.clearBillHolder();
+    } else {
+      toast("AM I JOKE TO YOU?");
+    }
+    //erase bill holder
 
-    await this.setState({ visiblePopupAdd: false });
+    this.setState(state => ({ ...state, visiblePopupAdd: false }));
   };
 
   saveData = () => {
@@ -273,7 +280,9 @@ class BillsScreen extends Component {
       pageTitle,
       money,
       billHolder,
-      visiblePopup,
+      visiblePopupUpdate,
+      visiblePopupDelete,
+      visiblePopupAdd,
       visiblePopupMoney,
       isLoadingComplete
     } = this.state;
@@ -330,7 +339,7 @@ class BillsScreen extends Component {
                     <Conta
                       title={el.title}
                       bill={el.bill}
-                      deleteCallback={() => {
+                      deleteCallback={async () => {
                         this.setState({
                           visiblePopupDelete: true,
                           billHolder: el
@@ -372,23 +381,7 @@ class BillsScreen extends Component {
               Saldo: R$ {parseFloat(money - this.sumAll(bills)).toFixed(2)}
             </Total>
 
-            {/* popup update */}
-            <PopupBill
-              visible={this.state.visiblePopupUpdate}
-              onCancel={() => this.setState({ visiblePopupUpdate: false })}
-              action={this.updateBill}
-              bill={this.state.billHolder}
-            />
-
-            {/* popup add */}
-            <PopupBill
-              visible={this.state.visiblePopupAdd}
-              onCancel={() => this.setState({ visiblePopupAdd: false })}
-              action={this.addBill}
-              bill={this.state.billHolder}
-            />
-
-            {/* popup add */}
+            {/* popup money */}
             <Popup
               visible={visiblePopupMoney}
               onCancel={() => {
@@ -405,51 +398,50 @@ class BillsScreen extends Component {
               }}
               Content={this.ContentEditMoney}
             />
-
-            {/* confirm delete */}
-
-            <ConfirmPopup
-              visible={this.state.visiblePopupDelete}
-              onCancel={() => this.setState({ visiblePopupDelete: false })}
-              onConfirm={() => {
-                this.deleteBill(this.state.billHolder);
-              }}
-            />
-
-            {/* <Popup
-              visible={visiblePopup}
+            {/* popup add / update */}
+            <Popup
+              visible={visiblePopupAdd || visiblePopupUpdate}
               onCancel={() => {
-                this.setState(state => ({ ...state, visiblePopup: false }));
+                this.setState(state => ({
+                  ...state,
+                  visiblePopupUpdate: false,
+                  visiblePopupAdd: false
+                }));
               }}
               onConfirm={() => {
-                //validate bill
-                const billWithDot = ("" + billHolder.bill).replace(",", ".");
-                if (
-                  billHolder.title &&
-                  billHolder.title !== "" &&
-                  billWithDot &&
-                  billWithDot !== "" &&
-                  billWithDot > 0
-                ) {
-                  actionAddBill({
-                    title: billHolder.title,
-                    paid: billHolder.paid,
-                    bill: billWithDot,
-                    id:
-                      bills && bills.length !== 0
-                        ? bills[bills.length - 1].id + 1
-                        : 0
-                  });
-                  this.clearBillHolder();
-                } else {
-                  toast("AM I JOKE TO YOU?");
-                }
-                //erase bill holder
-
-                this.setState(state => ({ ...state, visiblePopup: false }));
+                visiblePopupAdd
+                  ? this.addBill()
+                  : visiblePopupUpdate
+                  ? this.updateBill()
+                  : null;
+                this.clearBillHolder();
               }}
               Content={this.Content}
-            /> */}
+            />
+            {/* popup confirm delete*/}
+            <Popup
+              visible={visiblePopupDelete}
+              onCancel={() => {
+                this.setState({
+                  visiblePopupDelete: false
+                });
+              }}
+              onConfirm={async () => {
+                await actionDeleteBill(this.state.billHolder.id);
+                this.clearBillHolder();
+                this.setState({
+                  visiblePopupDelete: false
+                });
+                toast("apagou, tche!");
+              }}
+              Content={() => (
+                <View
+                  style={{ alignItems: "center", justifyContent: "center" }}
+                >
+                  <Subtitle>Tens Certeza?</Subtitle>
+                </View>
+              )}
+            />
 
             {/* pop up edit money */}
           </WrapperTotals>

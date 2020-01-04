@@ -42,6 +42,7 @@ import AddButton from "../../components/AddButton";
 import FadeInView from "../../components/FadeInView";
 import { AppLoading } from "expo";
 import { Asset } from "expo-asset";
+import { Subtitle } from "../../components/Page/style";
 
 /**
  * pages: [int]
@@ -54,6 +55,7 @@ class PagesScreen extends Component {
 
   state = {
     visiblePopupAdd: false,
+    visiblePopupDelete: false,
     pageHolder: {},
     isLoaded: false,
     isLoadingComplete: false
@@ -97,7 +99,7 @@ class PagesScreen extends Component {
   /**
    * Função que deleta a página do contexto e do local storage
    */
-  deletePage = pageId => {
+  deletePage = async pageId => {
     const { actionDeletePage, pages } = this.props;
     // delete page / bills from localStorage
     const ls_key_pages = LocalTypeKeys.PAGES;
@@ -105,10 +107,10 @@ class PagesScreen extends Component {
     const ls_key_bills = LocalTypeKeys.BILLS + "/" + pageId;
 
     // apagando pagina
-    this.props.actionDeletePage(pageId);
+    await actionDeletePage(pageId);
 
     // *** APAGANDO PAGINA no localStorage***
-    setLocalStorageData(ls_key_pages, pages).then(res => {
+    setLocalStorageData(ls_key_pages, this.props.pages).then(res => {
       console.log("Página apagada");
       toast("Página apagada");
     });
@@ -150,13 +152,13 @@ class PagesScreen extends Component {
       //console.log("PAGINAS:", pages, newPages);
 
       setLocalStorageData(ls_key_pages, newPages)
-        .then(res => {
+        .then(() => {
           setLocalStorageData(ls_key_money + "/" + pageId, 0);
         })
-        .then(res => {
+        .then(() => {
           setLocalStorageData(ls_key_bills + "/" + pageId, []);
         })
-        .then(res => {
+        .then(() => {
           this.clearPageHolder();
           this.changePage(newPage.title, pageId);
         })
@@ -239,7 +241,7 @@ class PagesScreen extends Component {
 
   render() {
     const { pages } = this.props;
-    const { isLoadingComplete } = this.state;
+    const { isLoadingComplete, visiblePopupDelete } = this.state;
 
     if (!isLoadingComplete) {
       return (
@@ -267,7 +269,10 @@ class PagesScreen extends Component {
                         >
                           <DeleteButton
                             onPress={() => {
-                              this.deletePage(page.id);
+                              this.setState({
+                                visiblePopupDelete: true,
+                                pageHolder: page
+                              });
                             }}
                           >
                             <Icon name="trash" size={12} color={white} />
@@ -324,6 +329,31 @@ class PagesScreen extends Component {
               }}
               onConfirm={this.addPage}
               Content={this.ContentPopup}
+            />
+
+            {/* popup confirm */}
+            <Popup
+              visible={visiblePopupDelete}
+              onCancel={() => {
+                this.setState({
+                  visiblePopupDelete: false
+                });
+              }}
+              onConfirm={async () => {
+                await this.deletePage(this.state.pageHolder.id);
+                this.setState({
+                  visiblePopupDelete: false,
+                  pageHolder: { id: -1 }
+                });
+                toast("Página apagada!");
+              }}
+              Content={() => (
+                <View
+                  style={{ alignItems: "center", justifyContent: "center" }}
+                >
+                  <Subtitle>Tens Certeza?</Subtitle>
+                </View>
+              )}
             />
           </WrapperPage>
           <AddButton

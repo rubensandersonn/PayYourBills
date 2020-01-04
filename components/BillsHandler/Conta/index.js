@@ -50,7 +50,7 @@ export default class Conta extends React.Component {
         />
         <Line horizontal={true}>
           <Texto decoration={checked ? "line-through" : "none"}>
-            R$ {bill ? bill : 0} -{" "}
+            R$ {bill ? (bill !== 0 ? parseFloat(bill).toFixed(2) : 0) : 0} -{" "}
           </Texto>
           <Texto decoration={checked ? "line-through" : "none"}>
             {title ? title : ""}

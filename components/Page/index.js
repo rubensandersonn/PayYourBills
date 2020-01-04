@@ -1,5 +1,5 @@
 import React from "react";
-import { View } from "react-native";
+
 import { Card, Title, Subtitle } from "./style";
 
 export default function Page(props) {
@@ -8,8 +8,7 @@ export default function Page(props) {
   return (
     <Card onPress={onPress}>
       <Title>{title}</Title>
-      <Subtitle> - R$ {totalBill}</Subtitle>
-      <Subtitle>R$ {saldo}</Subtitle>
+      <Subtitle> ... </Subtitle>
     </Card>
   );
 }
