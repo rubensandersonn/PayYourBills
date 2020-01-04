@@ -7,7 +7,10 @@ export const Title = styled.Text`
   color: ${darkGray};
   font-weight: bold;
   background-color: transparent;
-  max-width: 70%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  /* flex: 1; */
 `;
 
 export const Subtitle = styled.Text`
@@ -21,5 +24,7 @@ export const Card = styled.View`
   margin: 10px;
   align-items: center;
   justify-content: center;
-  /* flex: 1; */
+
+  /* width: 80%; // sem relação */
+  flex: 1;
 `;

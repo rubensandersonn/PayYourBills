@@ -3,7 +3,6 @@ import React, { Component, useCallback } from "react";
 import { View, Image, ActivityIndicator } from "react-native";
 
 import { connect } from "react-redux";
-import { bindActionCreators } from "redux";
 
 import Icon from "react-native-vector-icons/FontAwesome";
 
@@ -14,13 +13,7 @@ import {
   actionUpdateAllPages
 } from "../../store/pages";
 
-import {
-  Card,
-  DeleteButton,
-  WrapperPage,
-  ScrollList,
-  WrapperRow
-} from "./style";
+import { WrapperPage, WrapperRow } from "./style";
 import {
   setLocalStorageData,
   LocalTypeKeys,
@@ -28,21 +21,15 @@ import {
 } from "../../utils/LocalStorageHandler";
 import { toast } from "../../utils/functions";
 import Popup from "../../components/Popup";
-import {
-  TitlePopup,
-  TextInputName,
-  WrapperList,
-  TitlePage
-} from "../BillsScreen/styles";
-import { RoundButton, TextWhite } from "../../utils/styled";
+import { TitlePopup, TextInputName, TitlePage } from "../BillsScreen/styles";
 
-import Page from "../../components/Page";
-import { white, secondary } from "../../utils/colors";
+import { white } from "../../utils/colors";
 import AddButton from "../../components/AddButton";
-import FadeInView from "../../components/FadeInView";
+// import FadeInView from "../../components/FadeInView";
 import { AppLoading } from "expo";
 import { Asset } from "expo-asset";
 import { Subtitle } from "../../components/Page/style";
+import PageList from "../../components/Page/PageList";
 
 /**
  * pages: [int]
@@ -55,14 +42,16 @@ class PagesScreen extends Component {
 
   state = {
     visiblePopupAdd: false,
+    visiblePopupUpdate: false,
     visiblePopupDelete: false,
     pageHolder: {},
     isLoaded: false,
-    isLoadingComplete: false
+    isLoadingComplete: false,
+    _menu: null
   };
 
   /**
-   * muda para a página de Bills (unica)
+   * Muda para a página de Bills (unica)
    */
   changePage = (pageTitle, pageId) => {
     this.props.navigation.navigate("Bills", {
@@ -72,17 +61,17 @@ class PagesScreen extends Component {
   };
 
   /**
-   * limpa o holder do state
+   * Limpa o holder do state
    */
   clearPageHolder = () => {
     this.setState(state => ({
       ...state,
-      billHolder: { title: "", id: -1 }
+      pageHolder: { title: "", id: -1 }
     }));
   };
 
   /**
-   * Função que calcula o total das contas de uma conta
+   * Calcula o total das contas de uma conta
    */
   calcTotalBills = bills => {
     // get page / bills from local storage
@@ -92,12 +81,11 @@ class PagesScreen extends Component {
         total = total + el.bill;
       });
     }
-    // console.log("há contas para somar", bills, total);
     return total;
   };
 
   /**
-   * Função que deleta a página do contexto e do local storage
+   * Deleta a página do contexto e do local storage
    */
   deletePage = async pageId => {
     const { actionDeletePage, pages } = this.props;
@@ -110,19 +98,39 @@ class PagesScreen extends Component {
     await actionDeletePage(pageId);
 
     // *** APAGANDO PAGINA no localStorage***
-    setLocalStorageData(ls_key_pages, this.props.pages).then(res => {
+    setLocalStorageData(ls_key_pages, this.props.pages).then(() => {
+      this.clearPageHolder();
       console.log("Página apagada");
       toast("Página apagada");
+      // apagando dinheiro
+      setLocalStorageData(ls_key_money, null).then(() => {
+        console.log("dinheiro apagado");
+        // apagando contas
+        setLocalStorageData(ls_key_bills, null).then(() => {
+          console.log("contas apagadas");
+        });
+      });
     });
+  };
 
-    // apagando dinheiro
-    setLocalStorageData(ls_key_money, null).then(res => {
-      console.log("dinheiro apagado");
-    });
+  // === crud ===
 
-    // apagando contas
-    setLocalStorageData(ls_key_bills, null).then(res => {
-      console.log("contas apagadas");
+  /**
+   * Função que atualiza a página ao contexto e ao localStorage
+   */
+  updatePage = async () => {
+    const ls_key_pages = LocalTypeKeys.PAGES;
+    const { pageHolder } = this.state;
+
+    await this.props.actionUpdatePage(
+      { ...pageHolder, title: pageHolder.title },
+      pageHolder.id
+    );
+
+    setLocalStorageData(ls_key_pages, this.props.pages).then(() => {
+      this.clearPageHolder();
+      console.log("Página Atualizada");
+      toast("Página Atualizada");
     });
   };
 
@@ -171,6 +179,7 @@ class PagesScreen extends Component {
     }
 
     this.setState(state => ({ ...state, visiblePopupAdd: false }));
+    this.clearPageHolder();
   };
 
   /**
@@ -195,7 +204,6 @@ class PagesScreen extends Component {
     );
 
   // loading async
-
   loadResourcesAsync = async () => {
     const ls_key_pages = LocalTypeKeys.PAGES;
 
@@ -241,7 +249,12 @@ class PagesScreen extends Component {
 
   render() {
     const { pages } = this.props;
-    const { isLoadingComplete, visiblePopupDelete } = this.state;
+    const {
+      isLoadingComplete,
+      visiblePopupDelete,
+      visiblePopupUpdate,
+      visiblePopupAdd
+    } = this.state;
 
     if (!isLoadingComplete) {
       return (
@@ -256,78 +269,55 @@ class PagesScreen extends Component {
         <>
           <WrapperPage>
             <WrapperRow>
-              <ScrollList index="left">
-                {pages &&
-                  pages.map(
-                    (page, index) =>
-                      index % 2 == 0 && (
-                        <Card
-                          key={index}
-                          onPress={() => {
-                            this.changePage(page.title, page.id);
-                          }}
-                        >
-                          <DeleteButton
-                            onPress={() => {
-                              this.setState({
-                                visiblePopupDelete: true,
-                                pageHolder: page
-                              });
-                            }}
-                          >
-                            <Icon name="trash" size={12} color={white} />
-                          </DeleteButton>
-                          <Page
-                            title={page.title}
-                            totalBill={parseFloat(
-                              page.totalBill ? page.totalBill : 0
-                            ).toFixed(2)}
-                            saldo={parseFloat(
-                              page.saldo ? page.saldo : 0
-                            ).toFixed(2)}
-                          />
-                        </Card>
-                      )
-                  )}
-              </ScrollList>
-              <ScrollList index="right">
-                {pages &&
-                  pages.map(
-                    (page, index) =>
-                      index % 2 != 0 && (
-                        <Card
-                          key={index}
-                          onPress={() => {
-                            this.changePage(page.title, page.id);
-                          }}
-                        >
-                          <DeleteButton
-                            onPress={() => {
-                              this.deletePage(page.id);
-                            }}
-                          >
-                            <Icon name="trash" size={12} color={white} />
-                          </DeleteButton>
-                          <Page
-                            title={page.title}
-                            totalBill={parseFloat(
-                              page.totalBill ? page.totalBill : 0
-                            ).toFixed(2)}
-                            saldo={parseFloat(
-                              page.saldo ? page.saldo : 0
-                            ).toFixed(2)}
-                          />
-                        </Card>
-                      )
-                  )}
-              </ScrollList>
+              <PageList
+                side={"left"}
+                pages={pages}
+                filter={index => index % 2 !== 0}
+                updateCallback={page => {
+                  this.setState({ pageHolder: page, visiblePopupUpdate: true });
+                }}
+                deleteCallback={page => {
+                  this.setState({ pageHolder: page, visiblePopupDelete: true });
+                }}
+                changePage={this.changePage}
+              />
+
+              <PageList
+                side={"right"}
+                pages={pages}
+                filter={index => index % 2 === 0}
+                updateCallback={page => {
+                  this.setState({ pageHolder: page, visiblePopupUpdate: true });
+                }}
+                deleteCallback={page => {
+                  this.setState({ pageHolder: page, visiblePopupDelete: true });
+                }}
+                changePage={this.changePage}
+              />
             </WrapperRow>
+
+            {/* popup nome pagina */}
             <Popup
-              visible={this.state.visiblePopupAdd}
+              visible={visiblePopupAdd || visiblePopupUpdate}
               onCancel={() => {
-                this.setState(state => ({ ...state, visiblePopupAdd: false }));
+                this.setState(state => ({
+                  ...state,
+                  visiblePopupAdd: false,
+                  visiblePopupUpdate: false
+                }));
               }}
-              onConfirm={this.addPage}
+              onConfirm={() => {
+                visiblePopupAdd
+                  ? this.addPage()
+                  : visiblePopupUpdate
+                  ? this.updatePage()
+                  : null;
+                this.clearPageHolder();
+                this.setState({
+                  visiblePopupAdd: false,
+                  visiblePopupUpdate: false
+                });
+              }}
               Content={this.ContentPopup}
             />
 

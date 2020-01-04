@@ -1,5 +1,12 @@
 import styled from "styled-components/native";
-import { lightGray, danger, green } from "../../utils/colors";
+
+import {
+  darkGray,
+  gray,
+  lightGray,
+  danger,
+  green
+} from "../../../utils/colors";
 
 export const Card = styled.View`
   border-color: ${lightGray};
@@ -21,6 +28,8 @@ export const DeleteButton = styled.TouchableOpacity`
   border-width: 1px;
   border-radius: 10px;
   padding: 12px;
+  margin-top: 5px;
+  margin-right: 5px;
 `;
 
 export const AddButton = styled.TouchableOpacity`
@@ -50,5 +59,32 @@ export const WrapperRow = styled.SafeAreaView`
 `;
 
 export const WrapperPage = styled.ScrollView`
+  flex: 1;
+`;
+
+export const Title = styled.Text`
+  font-size: 18px;
+  text-align: center;
+  color: ${darkGray};
+  font-weight: bold;
+  background-color: transparent;
+`;
+
+export const Subtitle = styled.Text`
+  font-size: 18px;
+  text-align: center;
+  color: ${gray};
+`;
+
+export const CardPage = styled.TouchableOpacity`
+  background-color: transparent;
+  margin: 2%;
+  padding-left: 8%;
+  padding-top: 8%;
+  padding-bottom: 8%;
+  align-items: center;
+  justify-content: center;
+
+  /* width: 80%; */
   flex: 1;
 `;

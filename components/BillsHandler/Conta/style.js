@@ -22,6 +22,7 @@ export const Wrapper = styled.View`
   padding-top: 10px;
   padding-bottom: 10px;
   flex-direction: row;
+  width: 100%;
   /* background: papayawhip; */
 `;
 
@@ -44,7 +45,7 @@ export const EditButton = styled.TouchableOpacity`
 export const MenuButton = styled.TouchableOpacity`
   width: 32px;
   height: 32px;
-  margin: 0px;
+  margin-right: 10px;
   padding: 0px;
   justify-content: center;
   align-items: center;
@@ -53,5 +54,5 @@ export const MenuButton = styled.TouchableOpacity`
 `;
 
 export const Line = styled.ScrollView`
-  max-width: 70%;
+  width: 100%;
 `;
